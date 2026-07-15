@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// DM-001: User
+model User {
+  id           String   @id @default(cuid())
+  name         String   @db.VarChar(50)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  status       String   @default("active") @db.VarChar(20)
+
+  cart             Cart?
+  orders           Order[]
+  ticketPurchases  TicketPurchase[]
+
+  @@map("users")
+}
+
+// DM-002: Movie
+model Movie {
+  id             String   @id @default(cuid())
+  title          String   @db.VarChar(200)
+  synopsis       String   @db.Text
+  genre          String   @db.VarChar(50)
+  releaseDate    DateTime @map("release_date") @db.Date
+  runtimeMinutes Int      @map("runtime_minutes")
+  status         String   @default("published") @db.VarChar(20) // published | unpublished
+
+  products   Product[]
+  screenings Screening[]
+
+  @@map("movies")
+}
+
+// DM-003: Product
+model Product {
+  id             String    @id @default(cuid())
+  name           String    @db.VarChar(200)
+  priceTaxIncluded Int     @map("price_tax_included")
+  stock          Int       @default(0)
+  publishStatus  String    @default("published") @map("publish_status") @db.VarChar(20) // published | unpublished
+  salesStartAt   DateTime? @map("sales_start_at")
+  salesEndAt     DateTime? @map("sales_end_at")
+  movieId        String?   @map("movie_id")
+
+  movie      Movie?      @relation(fields: [movieId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+// DM-004: Cart / CartItem
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User       @relation(fields: [userId], references: [id])
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String   @map("cart_id")
+  productId String   @map("product_id")
+  quantity  Int
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+// DM-005: Order / OrderItem
+model Order {
+  id             String   @id @default(cuid())
+  orderNumber    String   @unique @map("order_number")
+  userId         String   @map("user_id")
+  orderedAt      DateTime @default(now()) @map("ordered_at")
+  status         String   @default("confirmed") @db.VarChar(30) // pending_payment | confirmed | shipped | delivered | cancelled
+  shippingName   String   @map("shipping_name") @db.VarChar(100)
+  postalCode     String   @map("postal_code") @db.VarChar(10)
+  prefecture     String   @db.VarChar(20)
+  addressLine    String   @map("address_line") @db.VarChar(200)
+  phoneNumber    String   @map("phone_number") @db.VarChar(20)
+  paymentMethod  String   @map("payment_method") @db.VarChar(50)
+  totalAmount    Int      @map("total_amount")
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String @id @default(cuid())
+  orderId             String @map("order_id")
+  productId           String? @map("product_id") // nullable: 商品削除後も履歴保持 (ADR-004)
+  productSnapshotName String @map("product_snapshot_name") @db.VarChar(200)
+  unitPrice           Int    @map("unit_price")
+  quantity            Int
+  subtotal            Int
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("order_items")
+}
+
+// DM-006: Screening
+model Screening {
+  id             String    @id @default(cuid())
+  movieId        String    @map("movie_id")
+  startsAt       DateTime  @map("starts_at")
+  theaterName    String    @map("theater_name") @db.VarChar(100)
+  screenName     String    @map("screen_name") @db.VarChar(50)
+  seatsRemaining Int       @map("seats_remaining")
+  salesStartAt   DateTime? @map("sales_start_at")
+  salesEndAt     DateTime? @map("sales_end_at")
+
+  movie               Movie                @relation(fields: [movieId], references: [id])
+  ticketPurchaseItems TicketPurchaseItem[]
+
+  @@map("screenings")
+}
+
+// DM-007: TicketPurchase / TicketPurchaseItem
+model TicketPurchase {
+  id             String   @id @default(cuid())
+  purchaseNumber String   @unique @map("purchase_number")
+  userId         String   @map("user_id")
+  purchasedAt    DateTime @default(now()) @map("purchased_at")
+  totalAmount    Int      @map("total_amount")
+
+  user  User                 @relation(fields: [userId], references: [id])
+  items TicketPurchaseItem[]
+
+  @@map("ticket_purchases")
+}
+
+model TicketPurchaseItem {
+  id          String @id @default(cuid())
+  purchaseId  String @map("purchase_id")
+  screeningId String @map("screening_id")
+  ticketType  String @map("ticket_type") @db.VarChar(50) // 一般 | 学生 | シニア
+  unitPrice   Int    @map("unit_price")
+  quantity    Int
+
+  purchase  TicketPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  screening Screening      @relation(fields: [screeningId], references: [id])
+
+  @@map("ticket_purchase_items")
+}
