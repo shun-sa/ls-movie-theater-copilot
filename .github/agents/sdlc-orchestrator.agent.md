@@ -431,19 +431,110 @@ Production Codeに変更がない場合は、
 Integration Testを再実行してください。
 
 
-# Retry Policy
+# Retry and Failure Triage
 
-同一原因について
-無制限にRetryしてはいけません。
+通常のFailure Routingによって修正した後は、
+影響する工程を再実行してください。
 
-同一原因の修正が3回失敗した場合、
-FailureTriage Agentへ原因分析を依頼してください。
+同一Root Causeと判断されるFailureについて、
+同じ通常Routingでの修正・再実行が
+3回失敗した場合は、
+それ以上同じ修正Loopを継続してはいけません。
 
-FailureTriage Agent自身は
-Production Code、Requirement、ADRを変更しません。
+Failure Triage Agentを起動してください。
 
-診断結果をSDLC Orchestratorへ返却してください。
+Failure Triageへ最低限以下を渡してください。
 
+- current_phase
+- retry_count
+- failure_history
+- latest_failure
+- previous_routes
+- affected_artifacts
+
+Failure Triage Agent自身に
+成果物を修正させてはいけません。
+
+Failure Triage Agent自身から
+他Agentを直接起動させてはいけません。
+
+# Failure Triage Result Handling
+
+Failure Triage Agentが、
+
+`TRIAGED`
+
+を返した場合は、
+recommended_routeへ差し戻してください。
+
+Classificationごとの基本Routing:
+
+REQUIREMENT_ERROR:
+
+`REQUIREMENTS`
+
+ADR_REQUIRED:
+
+`ARCHITECTURE`
+
+IMPLEMENTATION_ERROR:
+
+`IMPLEMENTATION`
+
+TEST_ERROR:
+
+`UNIT_TEST`
+
+または
+
+`INTEGRATION_TEST`
+
+ENVIRONMENT_ERROR:
+
+`SDLC_ORCHESTRATOR`
+
+CROSS_PHASE_CONFLICT:
+
+Failure Triageが特定した
+最上流Root Cause工程
+
+Failure Triageが、
+
+`BLOCKED`
+
+を返した場合は、
+同一修正Loopを継続してはいけません。
+
+ユーザー判断または追加情報が必要な状態として
+SDLCを停止してください。
+
+Failure Triageが、
+
+`INVALID_INVOCATION`
+
+を返した場合は、
+Failure Triageを使用せず
+通常のFailure Routingへ戻してください。
+
+# Failure Triage Exclusions
+
+以下はRetry Thresholdまで繰り返してはいけません。
+
+`EXTERNAL_TEST_INPUT_REQUIRED`
+
+→ External Test Input GateへRouteする
+
+`TEST_SPEC_CONFLICT`
+
+→ External Test Caseを変更せず、
+ユーザー判断が必要なBlocking状態とする
+
+`AUTOMATION_BLOCKED`
+
+→ Caseを削除・Skipせず、
+ユーザー判断が必要なBlocking状態とする
+
+これらをFailure Triageへ送ってはいけません。
 
 # Assurance Gate
 
