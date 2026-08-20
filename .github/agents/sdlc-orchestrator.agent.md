@@ -566,6 +566,53 @@ Quality Review Agent自身に
 Requirements、ADR、Production Code、
 Test Codeを修正させてはいけません。
 
+Security Review Agentを起動する場合、
+現在の工程に応じてaudit_scopeを指定してください。
+
+Requirements完了時:
+
+`REQUIREMENTS`
+
+Architecture完了時:
+
+`ARCHITECTURE`
+
+Implementation完了時:
+
+`IMPLEMENTATION`
+
+Unit Test完了時:
+
+`UNIT_TEST`
+
+Integration Test完了時:
+
+`INTEGRATION_TEST`
+
+SDLC最終確認:
+
+`FULL`
+
+Security Review Agentは、
+Deterministic Validatorが存在する工程では
+Validator PASS後に起動してください。
+
+Security Review AgentがFAILを返した場合、
+次工程へ進んではいけません。
+
+各Issueのrecommended_routeを確認し、
+Security IssueのRoot Causeとなる
+最上流工程へ差し戻してください。
+
+Security Review Agent自身に
+Requirements、ADR、Production Code、
+Test Codeを修正させてはいけません。
+
+Security Review AgentがSecretまたはCredentialを
+検出した場合でも、
+Secret値そのものをReportやOrchestrator Responseへ
+含めてはいけません。
+
 # Traceability Rule
 
 既存IDを勝手に変更してはいけません。
