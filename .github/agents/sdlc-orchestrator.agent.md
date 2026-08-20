@@ -475,6 +475,55 @@ Integration Test
 Assurance AgentがFAILを返した場合は、
 問題を作成したPhaseへ戻してください。
 
+Traceability Auditorを起動する場合、
+現在の工程に応じてaudit_scopeを指定してください。
+
+Architecture完了時:
+
+`ARCHITECTURE`
+
+Implementation完了時:
+
+`IMPLEMENTATION`
+
+Unit Test完了時:
+
+`UNIT_TEST`
+
+Integration Test完了時:
+
+`INTEGRATION_TEST`
+
+SDLC最終確認:
+
+`FULL`
+
+Traceability AuditorがReportを生成した後、
+以下のValidatorを実行してください。
+
+`python .github/skills/traceability-audit/scripts/validate_traceability.py`
+
+Traceability AuditorがPASSを返していても、
+Traceability Validatorがexit code 0を返さない場合は
+Traceability AssuranceをPASSとしてはいけません。
+
+Traceability ValidatorがFAILした場合は、
+`reports/traceability/traceability-report.json`
+および
+`reports/traceability/validation-result.json`
+を確認し、
+Issueのrecommended_routeに従って
+最上流の原因工程へ差し戻してください。
+
+Traceability AuditorがFAILを返した場合、
+次工程へ進んではいけません。
+
+各Issueのrecommended_routeを確認し、
+最上流の原因工程へ差し戻してください。
+
+Traceability Auditor自身に
+成果物を修正させてはいけません。
+
 
 # Traceability Rule
 
