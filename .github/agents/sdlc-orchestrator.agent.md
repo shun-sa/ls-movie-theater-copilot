@@ -524,6 +524,47 @@ Traceability AuditorがFAILを返した場合、
 Traceability Auditor自身に
 成果物を修正させてはいけません。
 
+Quality Review Agentを起動する場合、
+現在の工程に応じてaudit_scopeを指定してください。
+
+Requirements完了時:
+
+`REQUIREMENTS`
+
+Architecture完了時:
+
+`ARCHITECTURE`
+
+Implementation完了時:
+
+`IMPLEMENTATION`
+
+Unit Test完了時:
+
+`UNIT_TEST`
+
+Integration Test完了時:
+
+`INTEGRATION_TEST`
+
+SDLC最終確認:
+
+`FULL`
+
+Quality Review Agentは、
+Deterministic Validatorが存在する工程では
+Validator PASS後に起動してください。
+
+Quality Review AgentがFAILを返した場合、
+次工程へ進んではいけません。
+
+各Issueのrecommended_routeを確認し、
+問題のRoot Causeとなる最上流工程へ
+差し戻してください。
+
+Quality Review Agent自身に
+Requirements、ADR、Production Code、
+Test Codeを修正させてはいけません。
 
 # Traceability Rule
 
