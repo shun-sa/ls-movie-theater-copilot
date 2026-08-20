@@ -1,4 +1,3 @@
-```markdown
 ---
 name: Implementation
 description: >
@@ -468,4 +467,4 @@ delegation_required:
 
 summary:
   Implementation工程で実施した内容の要約
-```
+

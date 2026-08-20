@@ -48,6 +48,11 @@ ai_generated_cases:
 external_cases:
   optional: true
 
+  missing_input:
+    require_user_decision: true
+    allow_continue_without_external_cases_after_confirmation: true
+    allow_implicit_no_external_cases: false
+
   # 外部ケースは評価用データとして保護する
   immutable: true
 

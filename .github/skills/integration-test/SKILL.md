@@ -285,6 +285,17 @@ AI INITIAL Case生成前に読み込んではいけません。
 これによりExternal Caseの内容が
 AI INITIAL Case生成へ影響することを防止します。
 
+External Test Caseが存在する場合は、
+
+`external_input.provided = true`
+
+`external_input.user_confirmed_without_external_cases = false`
+
+として最終的なIntegration Test Evidenceへ記録してください。
+
+この時点でExternal Caseを読み込む前に、
+既に生成済みのAI INITIAL Caseを変更してはいけません。
+
 
 ## Step 9. External Caseが存在しない場合
 
@@ -312,22 +323,43 @@ External Test Caseを配置するよう案内してください。
 
 ## Step 10. External Caseなしの明示的選択
 
+External Test Caseが存在しない場合でも、
+Integration Test AgentまたはSkill自身の判断で
+External Caseなしとして処理を継続してはいけません。
+
 ユーザーが明示的に
-External Test Caseを使用しないことを選択した場合のみ、
+External Test Caseを使用しないことを選択した場合、
+SDLC Orchestratorから以下の情報が渡されます。
+
+`external_cases_confirmed_absent: true`
+
+この値が明示的に渡された場合のみ、
 External Caseなしで処理を継続できます。
 
-この場合は、
+Integration Test AgentまたはSkill自身で
+`external_cases_confirmed_absent`をtrueにしてはいけません。
 
-`normalize_external_test_cases.py --allow-none`
+External Caseなしで続行する場合は、
 
-相当の処理を実行し、
+`.github/skills/integration-test/scripts/normalize_external_test_cases.py --allow-none`
 
-`external_cases_provided: false`
+相当の処理を実行してください。
 
-をEvidenceへ記録してください。
+その場合、最終的なIntegration Test Evidenceへ
+以下を記録してください。
 
-単にFileが存在しないことを理由に
+`external_input.provided = false`
+
+`external_input.user_confirmed_without_external_cases = true`
+
+単にFileが存在しないことを理由に、
 この状態へ遷移してはいけません。
+
+以下の状態で処理を継続してはいけません。
+
+`external_input.provided = false`
+
+`external_input.user_confirmed_without_external_cases = false`
 
 
 ## Step 11. External Caseを読み込む
@@ -348,6 +380,17 @@ External Caseはすべて、
 として扱ってください。
 
 元Fileおよび元Caseの意味を変更してはいけません。
+
+正規化結果から取得した
+External CaseおよびExternal Case Integrity情報は、
+後続のIntegration Test Evidence生成時に使用してください。
+
+External Test Caseが提供されている場合、
+最終Evidenceでは必ず以下となる必要があります。
+
+`external_input.provided = true`
+
+`external_input.user_confirmed_without_external_cases = false`
 
 
 ## Step 12. External Caseを正規化する

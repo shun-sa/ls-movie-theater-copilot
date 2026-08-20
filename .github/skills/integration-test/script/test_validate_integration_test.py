@@ -60,6 +60,11 @@ def base_policy() -> dict[str, Any]:
         },
         "external_cases": {
             "optional": True,
+            "missing_input": {
+                "require_user_decision": True,
+                "allow_continue_without_external_cases_after_confirmation": True,
+                "allow_implicit_no_external_cases": False,
+            },
             "immutable": True,
         },
         "coverage": {
@@ -546,6 +551,94 @@ class DefectTest(unittest.TestCase):
             )
         )
 
+class ExternalInputTest(unittest.TestCase):
+
+    def test_external_cases_provided_passes(self) -> None:
+        cases = {
+            "EXT-1": external_case(
+                "EXT-1",
+                "COV-1",
+            )
+        }
+
+        evidence = {
+            "external_input": {
+                "provided": True,
+                "user_confirmed_without_external_cases": False,
+            }
+        }
+
+        errors = validator.validate_external_input(
+            evidence,
+            cases,
+            base_policy(),
+        )
+
+        self.assertEqual(
+            [],
+            errors,
+        )
+
+    def test_confirmed_without_external_cases_passes(self) -> None:
+        evidence = {
+            "external_input": {
+                "provided": False,
+                "user_confirmed_without_external_cases": True,
+            }
+        }
+
+        errors = validator.validate_external_input(
+            evidence,
+            {},
+            base_policy(),
+        )
+
+        self.assertEqual(
+            [],
+            errors,
+        )
+
+    def test_missing_external_without_confirmation_fails(self) -> None:
+        evidence = {
+            "external_input": {
+                "provided": False,
+                "user_confirmed_without_external_cases": False,
+            }
+        }
+
+        errors = validator.validate_external_input(
+            evidence,
+            {},
+            base_policy(),
+        )
+
+        self.assertTrue(
+            any(
+                "did not explicitly confirm" in error
+                for error in errors
+            )
+        )
+
+    def test_external_input_must_match_plan(self) -> None:
+        evidence = {
+            "external_input": {
+                "provided": True,
+                "user_confirmed_without_external_cases": False,
+            }
+        }
+
+        errors = validator.validate_external_input(
+            evidence,
+            {},
+            base_policy(),
+        )
+
+        self.assertTrue(
+            any(
+                "does not match" in error
+                for error in errors
+            )
+        )
 
 class ExternalIntegrityTest(unittest.TestCase):
 

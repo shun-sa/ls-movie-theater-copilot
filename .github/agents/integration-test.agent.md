@@ -105,46 +105,83 @@ SDLC Orchestratorから渡された情報を入力として使用してくださ
 - Requirements工程のASSUMPTION
 - Architecture工程のASSUMPTION
 - Implementation工程のASSUMPTION
-
+- External Caseなしで続行するというユーザーの明示確認（該当時）
+  - external_cases_confirmed_absent: true（該当時のみ）
 
 # External Test Cases
 
-外部結合試験項目表は任意入力です。
+External Test Caseは任意入力です。
 
 ただし、
-外部試験項目表が配置されていない場合に、
-Integration Test Agent自身の判断で
-外部ケースなしとして処理を継続してはいけません。
+External Test Caseが配置されていないことと、
+External Test Caseを使用しないことは
+同一として扱ってはいけません。
 
 AI INITIAL Caseを生成・固定した後、
-外部試験項目表の存在を確認してください。
-
-標準配置先:
+以下の標準配置先を確認してください。
 
 `external-tests/integration-test/`
 
-外部試験項目表が存在しない場合は、
+External Test Caseが存在する場合は、
+External Caseを取り込み、
+処理を継続してください。
+
+External Test Caseが存在しない場合は、
+Integration Test Agent自身の判断で
+処理を継続してはいけません。
+
+以下のStatusを
+SDLC Orchestratorへ返却してください。
 
 `EXTERNAL_TEST_INPUT_REQUIRED`
 
-としてSDLC Orchestratorへ返却してください。
-
-SDLC Orchestratorからユーザーへ、
-結合試験項目表を配置するよう案内してください。
-
-使用するTemplate:
-
-`.github/skills/integration-test/templates/integration-test-case-template.xlsx`
+SDLC Orchestratorから
+ユーザーへExternal Test Caseの配置、
+またはExternal Caseなしで続行するかを
+確認してください。
 
 ユーザーが明示的に
-「外部試験ケースを使用しない」
-と判断した場合のみ、
-外部ケースなしで処理を継続できます。
+External Caseなしで続行することを選択した場合のみ、
+External Caseなしで処理を再開できます。
 
-外部ケース未配置と
-ユーザーによる外部ケースなしの明示的選択を
-同一として扱ってはいけません。
+SDLC Orchestratorから以下の情報が渡された場合、
 
+`external_cases_confirmed_absent: true`
+
+ユーザーがExternal Caseなしで進めることを
+明示的に確認したものとして扱います。
+
+Integration Test Agent自身で
+この値をtrueにしてはいけません。
+
+
+# External Input Evidence
+
+Integration Test Agentは、
+
+`reports/integration-test/integration-test-evidence.json`
+
+へExternal Test Caseの入力状態を
+必ず記録してください。
+
+External Caseが提供された場合:
+
+external_input:
+  provided: true
+  user_confirmed_without_external_cases: false
+
+ユーザーがExternal Caseなしで進めることを
+明示的に選択した場合:
+
+external_input:
+  provided: false
+  user_confirmed_without_external_cases: true
+
+以下の状態を生成してはいけません。
+
+external_input:
+  provided: false
+  user_confirmed_without_external_cases: false
 
 # Test Case Origin
 
@@ -531,7 +568,10 @@ Integration Test Agent自身の処理をSUCCESSとしてください。
 1. Integration Test Skillに従っている
 2. Required Coverageを作成している
 3. AI INITIAL Caseを生成している
-4. 外部Caseが提供された場合すべて取り込んでいる
+4. External Caseが提供された場合はすべて取り込んでいる。
+   External Caseが提供されていない場合は、
+   ユーザーがExternal Caseなしで続行することを
+   明示的に確認している
 5. AI CaseとExternal Caseを区別している
 6. Coverage比較を実施している
 7. MISSING Coverageを特定している

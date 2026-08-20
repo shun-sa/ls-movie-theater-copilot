@@ -299,6 +299,21 @@ def validate_policy(
         ],
         [
             "external_cases",
+            "missing_input",
+            "require_user_decision",
+        ],
+        [
+            "external_cases",
+            "missing_input",
+            "allow_continue_without_external_cases_after_confirmation",
+        ],
+        [
+            "external_cases",
+            "missing_input",
+            "allow_implicit_no_external_cases",
+        ],
+        [
+            "external_cases",
             "immutable",
         ],
         [
@@ -2006,6 +2021,149 @@ def validate_case_comparison(
 
     return errors
 
+# ============================================================
+# External Input
+# ============================================================
+
+
+def validate_external_input(
+    evidence: dict[str, Any],
+    case_map: dict[str, dict[str, Any]],
+    policy: dict[str, Any],
+) -> list[str]:
+
+    errors: list[str] = []
+
+    external_input = evidence.get(
+        "external_input"
+    )
+
+    if not isinstance(
+        external_input,
+        dict,
+    ):
+        return [
+            "integration-test-evidence.json "
+            "must contain external_input."
+        ]
+
+    if "provided" not in external_input:
+        errors.append(
+            "external_input.provided is required."
+        )
+
+    if (
+        "user_confirmed_without_external_cases"
+        not in external_input
+    ):
+        errors.append(
+            "external_input."
+            "user_confirmed_without_external_cases "
+            "is required."
+        )
+
+    if errors:
+        return errors
+
+    provided = bool(
+        external_input[
+            "provided"
+        ]
+    )
+
+    confirmed_without_external = bool(
+        external_input[
+            "user_confirmed_without_external_cases"
+        ]
+    )
+
+    has_external_cases = any(
+        str(
+            case.get(
+                "origin",
+                "",
+            )
+        ).upper()
+        == EXTERNAL_ORIGIN
+        for case in case_map.values()
+    )
+
+    require_user_decision = bool(
+        nested_get(
+            policy,
+            [
+                "external_cases",
+                "missing_input",
+                "require_user_decision",
+            ],
+            True,
+        )
+    )
+
+    allow_after_confirmation = bool(
+        nested_get(
+            policy,
+            [
+                "external_cases",
+                "missing_input",
+                "allow_continue_without_external_cases_after_confirmation",
+            ],
+            True,
+        )
+    )
+
+    allow_implicit = bool(
+        nested_get(
+            policy,
+            [
+                "external_cases",
+                "missing_input",
+                "allow_implicit_no_external_cases",
+            ],
+            False,
+        )
+    )
+
+    if provided != has_external_cases:
+        errors.append(
+            "external_input.provided does not match "
+            "the actual EXTERNAL cases in "
+            "integration-test-plan.json."
+        )
+
+    if (
+        provided
+        and confirmed_without_external
+    ):
+        errors.append(
+            "external_input is inconsistent: "
+            "provided=true and "
+            "user_confirmed_without_external_cases=true."
+        )
+
+    if (
+        not provided
+        and require_user_decision
+        and not confirmed_without_external
+        and not allow_implicit
+    ):
+        errors.append(
+            "External test cases were not provided "
+            "and the user did not explicitly confirm "
+            "continuation without external cases."
+        )
+
+    if (
+        not provided
+        and confirmed_without_external
+        and not allow_after_confirmation
+    ):
+        errors.append(
+            "Policy does not allow continuation "
+            "without external cases."
+        )
+
+    return errors
 
 # ============================================================
 # External Case Integrity
@@ -3232,6 +3390,79 @@ def validate_error_report(
 
     return errors
 
+def validate_external_input(
+    evidence: dict[str, Any],
+    policy: dict[str, Any],
+) -> list[str]:
+
+    errors: list[str] = []
+
+    external_input = evidence.get(
+        "external_input",
+        {},
+    )
+
+    provided = bool(
+        external_input.get(
+            "provided",
+            False,
+        )
+    )
+
+    confirmed_without_external = bool(
+        external_input.get(
+            "user_confirmed_without_external_cases",
+            False,
+        )
+    )
+
+    require_user_decision = bool(
+        nested_get(
+            policy,
+            [
+                "external_cases",
+                "missing_input",
+                "require_user_decision",
+            ],
+            True,
+        )
+    )
+
+    allow_implicit = bool(
+        nested_get(
+            policy,
+            [
+                "external_cases",
+                "missing_input",
+                "allow_implicit_no_external_cases",
+            ],
+            False,
+        )
+    )
+
+    if (
+        not provided
+        and require_user_decision
+        and not confirmed_without_external
+        and not allow_implicit
+    ):
+        errors.append(
+            "External test cases were not provided "
+            "and the user did not explicitly confirm "
+            "continuation without external cases."
+        )
+
+    if (
+        provided
+        and confirmed_without_external
+    ):
+        errors.append(
+            "external_input is inconsistent: "
+            "provided=true and "
+            "user_confirmed_without_external_cases=true."
+        )
+
+    return errors
 
 # ============================================================
 # Environment / Database
@@ -3742,6 +3973,13 @@ def validate(
     evidence = read_json(
         evidence_path
     )
+
+    errors.extend(
+    validate_external_input(
+        evidence,
+        policy,
+    )
+)
 
     errors.extend(
         validate_criteria_coverage(
