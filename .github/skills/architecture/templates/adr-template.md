@@ -2,12 +2,14 @@
 
 ## Status
 
-Proposed
+Proposed / Accepted / Superseded / Rejected
 
 ## Related Requirements
 
 - FR-xxx
 - NFR-xxx
+- SEC-xxx
+- CON-xxx
 
 ## Context
 
