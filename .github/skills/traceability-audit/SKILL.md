@@ -105,10 +105,23 @@ IDを生成せずSource Referenceとして保持してください。
 `INVALID_REQUIREMENT_REFERENCE`
 
 
-## Step 6. Accepted ADRを特定する
+## Step 6. Scopeに応じた有効ADRを特定する
 
-後続工程のTraceability監査では、
-Accepted ADRのみを現在有効なArchitecture Decisionとして扱います。
+`audit_scope=ARCHITECTURE`の場合は、
+Acceptance候補となるProposed ADRを
+Traceability監査対象として扱ってください。
+
+この時点では、
+Proposedであること自体を
+Traceability Failureとして扱ってはいけません。
+
+`audit_scope=IMPLEMENTATION`、
+`UNIT_TEST`、
+`INTEGRATION_TEST`、
+`FULL`
+の場合は、
+Accepted ADRのみを
+現在有効なArchitecture Decisionとして扱ってください。
 
 Superseded ADRを現在Decisionとして使用してはいけません。
 
@@ -116,7 +129,14 @@ Superseded ADRを現在Decisionとして使用してはいけません。
 ## Step 7. Requirement → ADRを確認する
 
 Architecture Decisionを必要とするRequirementについて、
-適切なAccepted ADRが存在することを確認してください。
+Scopeに応じた適切なADRが存在することを確認してください。
+
+`audit_scope=ARCHITECTURE`では、
+Acceptance候補となるProposed ADRとの
+Traceabilityを確認してください。
+
+Implementation以降では、
+Accepted ADRとのTraceabilityを確認してください。
 
 すべてのRequirementへ
 ADRを強制してはいけません。

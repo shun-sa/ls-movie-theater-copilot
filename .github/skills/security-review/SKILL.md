@@ -1,7 +1,7 @@
 ---
 name: security-review
 description: >
-  Requirements、Accepted ADR、Production Code、
+  Requirements、Architecture Decision、Production Code、
   Unit Test、Integration Testを対象として、
   Authentication、Authorization、Secret管理、
   Input Validation、Injection、Data Protection、
@@ -103,11 +103,30 @@ Requirement自体のSecurity問題を検出した場合は、
 としてください。
 
 
-## Step 6. Accepted ADRを読み込む
+## Step 6. ADRを読み込む
 
 `docs/adr/`
 
-からAccepted ADRを取得してください。
+からScopeに応じてADRを取得してください。
+
+`audit_scope=ARCHITECTURE`の場合は、
+Acceptance候補となるProposed ADRを
+Architecture Securityの監査対象として扱ってください。
+
+既存のAccepted ADRが存在する場合は、
+Acceptance候補のProposed ADRとの
+Security上の矛盾・重複・Guardrail不整合も確認してください。
+
+`audit_scope=IMPLEMENTATION`、
+`UNIT_TEST`、
+`INTEGRATION_TEST`、
+`FULL`
+の場合は、
+Accepted ADRのみを
+現在有効なArchitecture Decisionとして扱ってください。
+
+Superseded ADRを
+現在有効なDecisionとして扱ってはいけません。
 
 
 ## Step 7. Architecture Securityを確認する

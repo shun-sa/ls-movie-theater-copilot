@@ -91,11 +91,30 @@ ScopeがREQUIREMENTS以上の場合、
 Requirements Criterionを評価してください。
 
 
-## Step 6. Accepted ADRを読み込む
+## Step 6. ADRを読み込む
 
 `docs/adr/`
 
-からAccepted ADRを取得してください。
+からScopeに応じてADRを取得してください。
+
+`audit_scope=ARCHITECTURE`の場合は、
+Acceptance候補となるProposed ADRを
+Architecture Qualityの監査対象として扱ってください。
+
+既存のAccepted ADRが存在する場合は、
+Acceptance候補のProposed ADRとの
+矛盾・重複・整合性も確認してください。
+
+`audit_scope=IMPLEMENTATION`、
+`UNIT_TEST`、
+`INTEGRATION_TEST`、
+`FULL`
+の場合は、
+Accepted ADRのみを
+現在有効なArchitecture Decisionとして扱ってください。
+
+Superseded ADRを
+現在有効なDecisionとして扱ってはいけません。
 
 
 ## Step 7. Architecture Qualityを評価する
@@ -112,8 +131,12 @@ Production Codeを読み込んでください。
 
 ## Step 9. Implementation Qualityを評価する
 
-RequirementとAccepted ADRに対して、
+Requirementと、
+現在のScopeで有効なADRに対して、
 実装内容が意味的に妥当か確認してください。
+
+Implementation以降では、
+Accepted ADRのみを使用してください。
 
 
 ## Step 10. Unit Testを確認する
@@ -165,12 +188,12 @@ Test Expected Resultを
 Production Codeから導出していないか確認してください。
 
 Expected Resultは
-RequirementsおよびAccepted ADRから導出してください。
+Requirementsおよび現在のScopeで有効なADRから導出してください。
 
 
 ## Step 16. Scope Expansionを確認する
 
-RequirementやAccepted ADRに根拠のない
+Requirementや現在のScopeで有効なADRに根拠のない
 機能追加・Technology追加・Behavior追加がないか確認してください。
 
 

@@ -162,6 +162,16 @@ Architecture Agentを起動してください。
 
 新しいADRはProposedとして作成されます。
 
+Architecture PhaseのAssuranceでは、
+Acceptance候補となるProposed ADRを監査対象として扱ってください。
+
+Accepted ADRのみを後続工程のSource of TruthとするRuleは、
+Architecture Phase完了後の後続工程に適用します。
+
+Proposed ADRは、
+Architecture PhaseのAssuranceにPASSするまで
+Acceptedへ遷移させてはいけません。
+
 ADR Validatorを実行してください。
 
 標準Validator:
@@ -169,7 +179,11 @@ ADR Validatorを実行してください。
 `python .github/skills/architecture/scripts/validate_adr_structure.py`
 
 ValidatorおよびAssuranceがPASSした場合、
-対象ADRをAcceptedへ遷移させてください。
+Architecture AgentへAcceptanceを指示し、
+対象ADRのStatusをAcceptedへ遷移させてください。
+
+Architecture Decisionの内容自体を
+Orchestratorが変更してはいけません。
 
 Accepted ADRだけを
 後続工程の設計Source of Truthとして扱ってください。
@@ -314,9 +328,41 @@ Integration Test完了後、
 
 を実行してください。
 
-ValidatorがPASSしない限り
-Integration Test PhaseをPASSとしてはいけません。
+Integration Test ValidatorがPASSした後、
+必要なAssuranceを`audit_scope=INTEGRATION_TEST`で実行してください。
 
+Validatorおよび必要なAssuranceが
+すべてPASSした場合のみ、
+Integration Test PhaseをPASSとしてください。
+
+Integration Test PhaseがPASSした場合、
+Phase 6: Final Assuranceへ進んでください。
+
+# Phase 6: Final Assurance
+
+Integration Test PhaseがPASSした後、
+SDLC全体の最終Assuranceを実行してください。
+
+以下をすべて`audit_scope=FULL`で実行してください。
+
+1. Quality Review Agent
+2. Quality Review Validator
+3. Security Review Agent
+4. Security Review Validator
+5. Traceability Auditor
+6. Traceability Validator
+
+すべてPASSした場合のみ
+Final AssuranceをPASSとしてください。
+
+Final Assuranceで上流成果物の修正が必要となった場合は、
+Invalidation Rulesに従って対象工程へ差し戻してください。
+
+修正および後続工程の再実行が完了した後、
+Final Assuranceを再度`FULL`で実行してください。
+
+過去のPhase単位Assurance PASSを
+Final Assurance PASSの代わりに使用してはいけません。
 
 # Failure Routing
 
@@ -374,6 +420,19 @@ Caseを削除せず、
 
 上流成果物が変更された場合、
 変更前の後続Phase PASSをそのまま有効として扱ってはいけません。
+
+Requirements、Accepted ADR、Production Code、
+Unit Test Code、Integration Test Codeの変更によって
+Assurance対象Artifactが変更された場合、
+変更前に取得した以下のPASS結果を
+変更後Artifactへ再利用してはいけません。
+
+- Quality Review
+- Security Review
+- Traceability Audit
+
+対象ScopeについてAssurance Agentおよび
+対応するValidatorを再実行してください。
 
 ## Requirements Changed
 
@@ -437,7 +496,7 @@ Integration Testを再実行してください。
 影響する工程を再実行してください。
 
 同一Root Causeと判断されるFailureについて、
-同じ通常Routingでの修正・再実行が
+通常のFailure Routingによる修正・再実行が
 3回失敗した場合は、
 それ以上同じ修正Loopを継続してはいけません。
 
@@ -459,6 +518,23 @@ Failure Triage Agent自身から
 他Agentを直接起動させてはいけません。
 
 # Failure Triage Result Handling
+
+Failure Triage AgentがReportを生成した後、
+以下のValidatorを実行してください。
+
+`python .github/skills/failure-triage/scripts/validate_failure_triage.py`
+
+Failure Triage Agentの診断結果は、
+Failure Triage Validatorがexit code 0を返した場合のみ
+有効として扱ってください。
+
+ValidatorがFAILした場合は、
+Failure Triageのrecommended_routeを使用してはいけません。
+
+`reports/failure-triage/failure-triage-report.json`
+および
+`reports/failure-triage/validation-result.json`
+を確認してください。
 
 Failure Triage Agentが、
 
@@ -646,6 +722,23 @@ Quality Review Agentは、
 Deterministic Validatorが存在する工程では
 Validator PASS後に起動してください。
 
+Quality Review AgentがReportを生成した後、
+以下のValidatorを実行してください。
+
+`python .github/skills/quality-review/scripts/validate_quality_review.py`
+
+Quality Review AgentがPASSを返していても、
+Quality Review Validatorがexit code 0を返さない場合は
+Quality AssuranceをPASSとしてはいけません。
+
+Quality Review ValidatorがFAILした場合は、
+`reports/quality-review/quality-review-report.json`
+および
+`reports/quality-review/validation-result.json`
+を確認し、
+Issueのrecommended_routeに従って
+最上流の原因工程へ差し戻してください。
+
 Quality Review AgentがFAILを返した場合、
 次工程へ進んではいけません。
 
@@ -691,6 +784,23 @@ Validator PASS後に起動してください。
 Security Review AgentがFAILを返した場合、
 次工程へ進んではいけません。
 
+Security Review AgentがReportを生成した後、
+以下のValidatorを実行してください。
+
+`python .github/skills/security-review/scripts/validate_security_review.py`
+
+Security Review AgentがPASSを返していても、
+Security Review Validatorがexit code 0を返さない場合は
+Security AssuranceをPASSとしてはいけません。
+
+Security Review ValidatorがFAILした場合は、
+`reports/security-review/security-review-report.json`
+および
+`reports/security-review/validation-result.json`
+を確認し、
+Issueのrecommended_routeに従って
+最上流の原因工程へ差し戻してください。
+
 各Issueのrecommended_routeを確認し、
 Security IssueのRoot Causeとなる
 最上流工程へ差し戻してください。
@@ -710,8 +820,19 @@ Secret値そのものをReportやOrchestrator Responseへ
 
 Requirements:
 
+既存のRequirement IDを使用してください。
+
+例:
+
 FR-xxx
 NFR-xxx
+
+IDを持たないProject-wide Requirementは、
+Traceability Auditorの規約に従って
+`file#heading`形式のSource Referenceを使用できます。
+
+存在しないRequirement IDを
+Traceabilityのために生成してはいけません。
 
 Architecture:
 
@@ -765,7 +886,6 @@ resume_from:
 ADR_REQUIREDとしてArchitecture工程で
 解決可能か確認してください。
 
-
 # Completion Conditions
 
 以下をすべて満たした場合のみ
@@ -802,11 +922,31 @@ Integration Test Validator PASS
 未解決AUTOMATION_BLOCKEDなし
 
 Traceability PASS
+Traceability Validator PASS
 
 Quality Assurance PASS
+Quality Review Validator PASS
 
 Security Assurance PASS
+Security Review Validator PASS
 
+Failure Triageが実行された場合、
+Failure Triage Validator PASS
+
+未解決のFailure Triage `BLOCKED`なし
+
+Failure Triageが`INVALID_INVOCATION`を返した場合は、
+通常のFailure Routingへ復帰し、
+対象Failureが解消されていること
+
+Final Quality Assurance (`audit_scope=FULL`) PASS
+Final Quality Review Validator PASS
+
+Final Security Assurance (`audit_scope=FULL`) PASS
+Final Security Review Validator PASS
+
+Final Traceability Audit (`audit_scope=FULL`) PASS
+Final Traceability Validator PASS
 
 # Prohibited Actions
 
@@ -845,15 +985,29 @@ validators:
   architecture:
   unit_test:
   integration_test:
+  quality_review:
+  security_review:
+  traceability:
+  failure_triage:
 
 assurance:
   quality:
   security:
   traceability:
 
+failure_triage:
+  invoked:
+  status:
+  classification:
+  recommended_route:
+
 reports:
   unit_test:
   integration_test:
+  quality_review:
+  security_review:
+  traceability:
+  failure_triage:
 
 open_issues:
 
